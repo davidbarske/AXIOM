@@ -1,24 +1,31 @@
-===== Trying YouTube client: default =====
-[youtube] Extracting URL: https://youtu.be/pVDYRrxG6d4
-[youtube] pVDYRrxG6d4: Downloading webpage
-WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
-[youtube] pVDYRrxG6d4: Downloading android vr player API JSON
-ERROR: [youtube] pVDYRrxG6d4: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies
-===== Trying YouTube client: tv_embedded =====
-[youtube] Extracting URL: https://youtu.be/pVDYRrxG6d4
-[youtube] pVDYRrxG6d4: Downloading webpage
-WARNING: [youtube] Skipping unsupported client "tv_embedded"
-WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
-[youtube] pVDYRrxG6d4: Downloading android vr player API JSON
-ERROR: [youtube] pVDYRrxG6d4: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies
-===== Trying YouTube client: android_vr =====
-[youtube] Extracting URL: https://youtu.be/pVDYRrxG6d4
-[youtube] pVDYRrxG6d4: Downloading webpage
-[youtube] pVDYRrxG6d4: Downloading android vr player API JSON
-ERROR: [youtube] pVDYRrxG6d4: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies
-===== Trying YouTube client: web_safari =====
-[youtube] Extracting URL: https://youtu.be/pVDYRrxG6d4
-[youtube] pVDYRrxG6d4: Downloading webpage
-WARNING: [youtube] No title found in player responses; falling back to title from initial data. Other metadata may also be missing
-ERROR: [youtube] pVDYRrxG6d4: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies
-All YouTube download methods failed.
+===== Trying Piped API: https://pipedapi.kavin.rocks/streams/pVDYRrxG6d4 =====
+https://pipedapi.kavin.rocks: HTTPError: HTTP Error 526: <none>
+===== Trying Piped API: https://pipedapi.leptons.xyz/streams/pVDYRrxG6d4 =====
+https://pipedapi.leptons.xyz: HTTPError: HTTP Error 502: Bad Gateway
+===== Trying Piped API: https://pipedapi.nosebs.ru/streams/pVDYRrxG6d4 =====
+https://pipedapi.nosebs.ru: URLError: <urlopen error [Errno -2] Name or service not known>
+===== Trying Piped API: https://pipedapi-libre.kavin.rocks/streams/pVDYRrxG6d4 =====
+https://pipedapi-libre.kavin.rocks: HTTPError: HTTP Error 502: Bad Gateway
+===== Trying Piped API: https://piped-api.privacy.com.de/streams/pVDYRrxG6d4 =====
+https://piped-api.privacy.com.de: URLError: <urlopen error [Errno -2] Name or service not known>
+===== Trying Piped API: https://pipedapi.adminforge.de/streams/pVDYRrxG6d4 =====
+https://pipedapi.adminforge.de: URLError: <urlopen error [Errno -2] Name or service not known>
+===== Trying Piped API: https://api.piped.yt/streams/pVDYRrxG6d4 =====
+https://api.piped.yt: URLError: <urlopen error [Errno -2] Name or service not known>
+===== Trying Piped API: https://pipedapi.drgns.space/streams/pVDYRrxG6d4 =====
+https://pipedapi.drgns.space: URLError: <urlopen error timed out>
+===== Trying Piped API: https://pipedapi.owo.si/streams/pVDYRrxG6d4 =====
+https://pipedapi.owo.si: URLError: <urlopen error [Errno -5] No address associated with hostname>
+===== Trying Piped API: https://pipedapi.ducks.party/streams/pVDYRrxG6d4 =====
+https://pipedapi.ducks.party: URLError: <urlopen error timed out>
+===== Trying Piped API: https://piped-api.codespace.cz/streams/pVDYRrxG6d4 =====
+https://piped-api.codespace.cz: URLError: <urlopen error [Errno -2] Name or service not known>
+===== Trying Piped API: https://pipedapi.reallyaweso.me/streams/pVDYRrxG6d4 =====
+https://pipedapi.reallyaweso.me: HTTPError: HTTP Error 502: Bad Gateway
+===== Trying Piped API: https://api.piped.private.coffee/streams/pVDYRrxG6d4 =====
+https://api.piped.private.coffee: HTTPError: HTTP Error 500: Internal Server Error
+===== Trying Piped API: https://pipedapi.darkness.services/streams/pVDYRrxG6d4 =====
+https://pipedapi.darkness.services: URLError: <urlopen error [Errno -5] No address associated with hostname>
+===== Trying Piped API: https://pipedapi.orangenet.cc/streams/pVDYRrxG6d4 =====
+https://pipedapi.orangenet.cc: JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+All Piped methods failed.
