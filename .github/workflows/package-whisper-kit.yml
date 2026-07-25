@@ -1,0 +1,43 @@
+name: Package temporary Whisper kit
+
+on:
+  push:
+    branches:
+      - temp-moses-tembe-transcription
+    paths:
+      - .github/workflows/package-whisper-kit.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/package-whisper-kit.yml
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download whisper.cpp Linux binary
+        run: |
+          mkdir -p whisper-kit
+          curl --fail --location --retry 4 --retry-delay 3 \
+            -o /tmp/whisper-linux.zip \
+            'https://github.com/sjoerdteunisse/whisper.cpp/releases/download/v1.0.0/whisper-cpp-linux-x64-cpu.zip'
+          unzip -q /tmp/whisper-linux.zip -d whisper-kit
+          find whisper-kit -type f -maxdepth 4 -print
+
+      - name: Download quantised English small model
+        run: |
+          curl --fail --location --retry 4 --retry-delay 3 \
+            -o whisper-kit/ggml-small.en-q5_1.bin \
+            'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-q5_1.bin?download=true'
+          ls -lh whisper-kit/ggml-small.en-q5_1.bin
+
+      - name: Upload kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-local-kit
+          path: whisper-kit/
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
