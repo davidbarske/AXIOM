@@ -32,12 +32,42 @@ jobs:
           python -m pip install faster-whisper yt-dlp
 
       - name: Download and prepare speech audio
+        id: download
+        continue-on-error: true
         run: |
-          yt-dlp --no-playlist -x --audio-format wav --audio-quality 0 \
-            -o 'moses_tembe_source.%(ext)s' 'https://youtu.be/pVDYRrxG6d4'
-          ffmpeg -y -i moses_tembe_source.wav -ar 16000 -ac 1 -c:a pcm_s16le moses_tembe_16k.wav
+          mkdir -p transcription-output
+          set +e
+          : > transcription-output/download.log
+          success=0
+          for client in default tv_embedded android_vr web_safari; do
+            echo "===== Trying YouTube client: $client =====" | tee -a transcription-output/download.log
+            rm -f moses_tembe_source.*
+            if [ "$client" = default ]; then
+              yt-dlp --no-playlist -x --audio-format wav --audio-quality 0 \
+                -o 'moses_tembe_source.%(ext)s' 'https://youtu.be/pVDYRrxG6d4' \
+                2>&1 | tee -a transcription-output/download.log
+            else
+              yt-dlp --no-playlist --extractor-args "youtube:player_client=$client" \
+                -x --audio-format wav --audio-quality 0 \
+                -o 'moses_tembe_source.%(ext)s' 'https://youtu.be/pVDYRrxG6d4' \
+                2>&1 | tee -a transcription-output/download.log
+            fi
+            code=${PIPESTATUS[0]}
+            if [ $code -eq 0 ] && [ -f moses_tembe_source.wav ]; then
+              success=1
+              echo "Download succeeded with client: $client" | tee -a transcription-output/download.log
+              break
+            fi
+          done
+          if [ $success -ne 1 ]; then
+            echo 'All YouTube download methods failed.' | tee -a transcription-output/download.log
+            exit 1
+          fi
+          ffmpeg -y -i moses_tembe_source.wav -ar 16000 -ac 1 -c:a pcm_s16le moses_tembe_16k.wav \
+            2>&1 | tee -a transcription-output/download.log
 
       - name: Transcribe with Whisper small.en
+        if: steps.download.outcome == 'success'
         run: |
           cat > /tmp/transcribe.py <<'PY'
           from faster_whisper import WhisperModel
@@ -129,11 +159,12 @@ jobs:
           PY
           python /tmp/transcribe.py
 
-      - name: Commit transcription output
-        if: github.event_name == 'push'
+      - name: Commit temporary output or diagnostics
+        if: always() && github.event_name == 'push'
         run: |
           git config user.name 'Temporary transcription workflow'
           git config user.email 'actions@users.noreply.github.com'
           git add transcription-output/
-          git commit -m 'Add temporary Moses Tembe working transcript [skip ci]'
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add temporary transcription output or diagnostics [skip ci]'
           git push origin HEAD:temp-moses-tembe-transcription
