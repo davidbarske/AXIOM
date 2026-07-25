@@ -1,4 +1,4 @@
-name: Package temporary Whisper kit
+name: Package temporary Whisper medium kit
 
 on:
   push:
@@ -15,7 +15,7 @@ on:
 jobs:
   package:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Download whisper.cpp Linux binary
         run: |
@@ -26,17 +26,17 @@ jobs:
           unzip -q /tmp/whisper-linux.zip -d whisper-kit
           find whisper-kit -type f -maxdepth 4 -print
 
-      - name: Download quantised English small model
+      - name: Download quantised English medium model
         run: |
           curl --fail --location --retry 4 --retry-delay 3 \
-            -o whisper-kit/ggml-small.en-q5_1.bin \
-            'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-q5_1.bin?download=true'
-          ls -lh whisper-kit/ggml-small.en-q5_1.bin
+            -o whisper-kit/ggml-medium.en-q5_0.bin \
+            'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.en-q5_0.bin?download=true'
+          ls -lh whisper-kit/ggml-medium.en-q5_0.bin
 
       - name: Upload kit
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-local-kit
+          name: whisper-medium-local-kit
           path: whisper-kit/
           compression-level: 0
           retention-days: 1
