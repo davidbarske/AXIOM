@@ -33,11 +33,11 @@ jobs:
             'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.en-q5_0.bin?download=true'
           ls -lh whisper-kit/ggml-medium.en-q5_0.bin
 
-      - name: Upload kit
+      - name: Upload compressed kit
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-medium-local-kit
+          name: whisper-medium-local-kit-compressed
           path: whisper-kit/
-          compression-level: 0
+          compression-level: 9
           retention-days: 1
           if-no-files-found: error
