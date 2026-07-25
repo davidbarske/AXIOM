@@ -1,0 +1,138 @@
+name: Temporary Moses Tembe transcription
+
+on:
+  push:
+    branches:
+      - temp-moses-tembe-transcription
+    paths:
+      - .github/workflows/transcribe-moses-tembe.yml
+
+permissions:
+  contents: write
+
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out temporary branch
+        uses: actions/checkout@v4
+        with:
+          ref: temp-moses-tembe-transcription
+          fetch-depth: 0
+
+      - name: Install transcription tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install faster-whisper yt-dlp
+
+      - name: Download and prepare speech audio
+        run: |
+          yt-dlp --no-playlist -x --audio-format wav --audio-quality 0 \
+            -o 'moses_tembe_source.%(ext)s' 'https://youtu.be/pVDYRrxG6d4'
+          ffmpeg -y -i moses_tembe_source.wav -ar 16000 -ac 1 -c:a pcm_s16le moses_tembe_16k.wav
+
+      - name: Transcribe with Whisper small.en
+        run: |
+          cat > /tmp/transcribe.py <<'PY'
+          from faster_whisper import WhisperModel
+          from pathlib import Path
+          import json
+
+          AUDIO = 'moses_tembe_16k.wav'
+          OUT = Path('transcription-output')
+          OUT.mkdir(exist_ok=True)
+
+          model = WhisperModel('small.en', device='cpu', compute_type='int8', cpu_threads=4)
+          segments, info = model.transcribe(
+              AUDIO,
+              language='en',
+              beam_size=5,
+              best_of=5,
+              vad_filter=True,
+              vad_parameters=dict(min_silence_duration_ms=500),
+              condition_on_previous_text=True,
+              initial_prompt=(
+                  'Moses Tembe speaking at the 2020 Christian Business Gathering in South Africa. '
+                  'Topics include Christian faith, God, Jesus Christ, ethical leadership, business, '
+                  'entrepreneurship, KwaZulu-Natal, Durban, economic development and South Africa.'
+              ),
+              word_timestamps=True,
+          )
+          segments = list(segments)
+
+          def stamp(seconds: float) -> str:
+              total = max(0, int(round(seconds)))
+              h, rem = divmod(total, 3600)
+              m, s = divmod(rem, 60)
+              return f'{h:02d}:{m:02d}:{s:02d}'
+
+          def srt_stamp(seconds: float) -> str:
+              ms = max(0, int(round(seconds * 1000)))
+              h, rem = divmod(ms, 3_600_000)
+              m, rem = divmod(rem, 60_000)
+              s, ms = divmod(rem, 1000)
+              return f'{h:02d}:{m:02d}:{s:02d},{ms:03d}'
+
+          txt_lines = [
+              'MOSES TEMBE — 2020 CHRISTIAN BUSINESS GATHERING',
+              'Machine-assisted working transcript from the public speech recording.',
+              'Speaker label: Moses Tembe. Low-confidence passages are marked for review.',
+              '',
+          ]
+          srt_lines = []
+          records = []
+
+          for idx, seg in enumerate(segments, 1):
+              text = seg.text.strip()
+              low = seg.avg_logprob < -0.85 or seg.no_speech_prob > 0.55
+              marker = ' [LOW CONFIDENCE]' if low else ''
+              txt_lines.append(f'[{stamp(seg.start)}–{stamp(seg.end)}] Moses Tembe{marker}: {text}')
+              srt_lines.extend([
+                  str(idx),
+                  f'{srt_stamp(seg.start)} --> {srt_stamp(seg.end)}',
+                  f'Moses Tembe: {text}{marker}',
+                  '',
+              ])
+              records.append({
+                  'index': idx,
+                  'start': seg.start,
+                  'end': seg.end,
+                  'text': text,
+                  'avg_logprob': seg.avg_logprob,
+                  'no_speech_prob': seg.no_speech_prob,
+                  'compression_ratio': seg.compression_ratio,
+                  'low_confidence': low,
+                  'words': [
+                      {
+                          'start': w.start,
+                          'end': w.end,
+                          'word': w.word,
+                          'probability': w.probability,
+                      }
+                      for w in (seg.words or [])
+                  ],
+              })
+
+          (OUT / 'Moses_Tembe_Speech_working_transcript.txt').write_text('\n'.join(txt_lines) + '\n', encoding='utf-8')
+          (OUT / 'Moses_Tembe_Speech_working_transcript.srt').write_text('\n'.join(srt_lines), encoding='utf-8')
+          (OUT / 'Moses_Tembe_Speech_segments.json').write_text(
+              json.dumps({
+                  'language': info.language,
+                  'language_probability': info.language_probability,
+                  'duration': info.duration,
+                  'duration_after_vad': info.duration_after_vad,
+                  'segments': records,
+              }, ensure_ascii=False, indent=2),
+              encoding='utf-8',
+          )
+          PY
+          python /tmp/transcribe.py
+
+      - name: Commit transcription output
+        run: |
+          git config user.name 'Temporary transcription workflow'
+          git config user.email 'actions@users.noreply.github.com'
+          git add transcription-output/
+          git commit -m 'Add temporary Moses Tembe working transcript [skip ci]'
+          git push origin HEAD:temp-moses-tembe-transcription
