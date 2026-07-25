@@ -6,6 +6,11 @@ on:
       - temp-moses-tembe-transcription
     paths:
       - .github/workflows/transcribe-moses-tembe.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/transcribe-moses-tembe.yml
 
 permissions:
   contents: write
@@ -104,12 +109,7 @@ jobs:
                   'compression_ratio': seg.compression_ratio,
                   'low_confidence': low,
                   'words': [
-                      {
-                          'start': w.start,
-                          'end': w.end,
-                          'word': w.word,
-                          'probability': w.probability,
-                      }
+                      {'start': w.start, 'end': w.end, 'word': w.word, 'probability': w.probability}
                       for w in (seg.words or [])
                   ],
               })
@@ -130,6 +130,7 @@ jobs:
           python /tmp/transcribe.py
 
       - name: Commit transcription output
+        if: github.event_name == 'push'
         run: |
           git config user.name 'Temporary transcription workflow'
           git config user.email 'actions@users.noreply.github.com'
