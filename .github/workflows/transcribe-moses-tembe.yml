@@ -29,42 +29,79 @@ jobs:
       - name: Install transcription tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install faster-whisper yt-dlp
+          python -m pip install faster-whisper requests
 
-      - name: Download and prepare speech audio
+      - name: Obtain and prepare speech audio
         id: download
         continue-on-error: true
         run: |
           mkdir -p transcription-output
-          set +e
-          : > transcription-output/download.log
-          success=0
-          for client in default tv_embedded android_vr web_safari; do
-            echo "===== Trying YouTube client: $client =====" | tee -a transcription-output/download.log
-            rm -f moses_tembe_source.*
-            if [ "$client" = default ]; then
-              yt-dlp --no-playlist -x --audio-format wav --audio-quality 0 \
-                -o 'moses_tembe_source.%(ext)s' 'https://youtu.be/pVDYRrxG6d4' \
-                2>&1 | tee -a transcription-output/download.log
-            else
-              yt-dlp --no-playlist --extractor-args "youtube:player_client=$client" \
-                -x --audio-format wav --audio-quality 0 \
-                -o 'moses_tembe_source.%(ext)s' 'https://youtu.be/pVDYRrxG6d4' \
-                2>&1 | tee -a transcription-output/download.log
-            fi
-            code=${PIPESTATUS[0]}
-            if [ $code -eq 0 ] && [ -f moses_tembe_source.wav ]; then
-              success=1
-              echo "Download succeeded with client: $client" | tee -a transcription-output/download.log
-              break
-            fi
-          done
-          if [ $success -ne 1 ]; then
-            echo 'All YouTube download methods failed.' | tee -a transcription-output/download.log
-            exit 1
-          fi
-          ffmpeg -y -i moses_tembe_source.wav -ar 16000 -ac 1 -c:a pcm_s16le moses_tembe_16k.wav \
-            2>&1 | tee -a transcription-output/download.log
+          cat > /tmp/download_audio.py <<'PY'
+          import json
+          import pathlib
+          import subprocess
+          import sys
+          import urllib.request
+
+          video_id = 'pVDYRrxG6d4'
+          instances = [
+              'https://pipedapi.kavin.rocks',
+              'https://pipedapi.leptons.xyz',
+              'https://pipedapi.nosebs.ru',
+              'https://pipedapi-libre.kavin.rocks',
+              'https://piped-api.privacy.com.de',
+              'https://pipedapi.adminforge.de',
+              'https://api.piped.yt',
+              'https://pipedapi.drgns.space',
+              'https://pipedapi.owo.si',
+              'https://pipedapi.ducks.party',
+              'https://piped-api.codespace.cz',
+              'https://pipedapi.reallyaweso.me',
+              'https://api.piped.private.coffee',
+              'https://pipedapi.darkness.services',
+              'https://pipedapi.orangenet.cc',
+          ]
+          log_path = pathlib.Path('transcription-output/download.log')
+          headers = {'User-Agent': 'Mozilla/5.0 Moses-Tembe-transcription/1.0'}
+          errors = []
+
+          def log(message):
+              print(message, flush=True)
+              with log_path.open('a', encoding='utf-8') as fh:
+                  fh.write(message + '\n')
+
+          log_path.write_text('', encoding='utf-8')
+          for base in instances:
+              try:
+                  endpoint = f'{base}/streams/{video_id}'
+                  log(f'===== Trying Piped API: {endpoint} =====')
+                  req = urllib.request.Request(endpoint, headers=headers)
+                  with urllib.request.urlopen(req, timeout=35) as response:
+                      payload = json.load(response)
+                  streams = [s for s in payload.get('audioStreams', []) if s.get('url')]
+                  if not streams:
+                      raise RuntimeError('No audio streams returned')
+                  streams.sort(key=lambda s: int(s.get('bitrate') or 0), reverse=True)
+                  for stream in streams:
+                      url = stream['url']
+                      log(f"Trying stream {stream.get('quality')} {stream.get('mimeType')} from {base}")
+                      cmd = [
+                          'ffmpeg', '-y', '-headers', 'User-Agent: Mozilla/5.0\r\n',
+                          '-i', url, '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le',
+                          'moses_tembe_16k.wav'
+                      ]
+                      proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=240)
+                      if proc.returncode == 0 and pathlib.Path('moses_tembe_16k.wav').stat().st_size > 1_000_000:
+                          log(f'Download succeeded through {base}')
+                          sys.exit(0)
+                      log(f'ffmpeg failed for stream: {proc.stdout[-1200:]}')
+              except Exception as exc:
+                  errors.append(f'{base}: {type(exc).__name__}: {exc}')
+                  log(errors[-1])
+          log('All Piped methods failed.')
+          sys.exit(1)
+          PY
+          python /tmp/download_audio.py
 
       - name: Transcribe with Whisper small.en
         if: steps.download.outcome == 'success'
@@ -111,7 +148,7 @@ jobs:
 
           txt_lines = [
               'MOSES TEMBE — 2020 CHRISTIAN BUSINESS GATHERING',
-              'Machine-assisted working transcript from the public speech recording.',
+              'Machine-assisted working transcript from the supplied speech recording.',
               'Speaker label: Moses Tembe. Low-confidence passages are marked for review.',
               '',
           ]
